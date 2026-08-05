@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build and packaging output
+dist/
+dist-electron/
+release/
+*.asar
+*.blockmap
+builder-debug.yml
+
+# Local SQLite and application data
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+userData/
+userdata/
+UserData/
+data/
+
+# Logs and test-generated data
+*.log
+logs/
+test-data/
+test-results/
+coverage/
+work/
+outputs/
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+*.swp
