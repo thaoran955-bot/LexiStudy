@@ -1,5 +1,33 @@
 # 更新日志
 
+## v0.2.0-alpha
+
+### Added
+
+- UI design system foundation。
+- Homepage redesign。
+- Dark/light theme foundation。
+- Typography scaling。
+- Animation feedback。
+
+### Improved
+
+- Homepage information hierarchy。
+- Card visual hierarchy。
+- Responsive layout。
+- Compact window experience。
+
+### Fixed
+
+- Homepage layout overflow issues。
+- UI consistency issues。
+
+### Not included
+
+- Learning page redesign。
+- New features。
+- Stats Dashboard。
+
 ## LexiStudy v0.1.1 Stable
 
 ### 新增
