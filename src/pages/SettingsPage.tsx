@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAppearance } from "../appearance/AppearanceContext";
+import type { SelectableTheme } from "../appearance/themeRegistry";
 import type { DailyTarget, StudyMode } from "../types/study";
 
 interface SettingsPageProps {
@@ -14,6 +16,10 @@ const modeOptions: readonly { value: StudyMode; label: string; description: stri
   { value: "en-to-zh", label: "英译中", description: "看到英文，回忆中文释义" },
   { value: "zh-to-en", label: "中译英", description: "看到中文，回忆英文单词" },
 ];
+const themeOptions: readonly { value: SelectableTheme; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+];
 
 export function SettingsPage({
   dailyTarget,
@@ -21,6 +27,7 @@ export function SettingsPage({
   onTargetChange,
   onModeChange,
 }: SettingsPageProps) {
+  const { theme, setTheme } = useAppearance();
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -39,9 +46,41 @@ export function SettingsPage({
         <div>
           <span className="eyebrow">Preferences</span>
           <h1>设置</h1>
-          <p>学习偏好会保存在本机 SQLite 中。</p>
+          <p>学习偏好会保存在本机 SQLite 中，外观偏好保存到本地配置。</p>
         </div>
       </header>
+
+      <section className="settings-section">
+        <div className="settings-section-heading">
+          <span className="section-label">Appearance</span>
+          <h2>外观</h2>
+        </div>
+        <div className="settings-list">
+          <div className="setting-row settings-control-row">
+            <div>
+              <strong>主题</strong>
+              <span>选择应用使用的外观主题。</span>
+            </div>
+            <div className="settings-options" aria-label="主题" role="radiogroup">
+              {themeOptions.map((option) => (
+                <button
+                  aria-checked={theme === option.value}
+                  className={theme === option.value ? "settings-option selected" : "settings-option"}
+                  key={option.value}
+                  onClick={() => {
+                    setTheme(option.value);
+                    setNotice(`主题已切换为 ${option.label}。`);
+                  }}
+                  role="radio"
+                  type="button"
+                >
+                  {theme === option.value ? "●" : "○"} {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section className="settings-section">
         <div className="settings-section-heading">
@@ -113,7 +152,7 @@ export function SettingsPage({
       </section>
 
       <div className="settings-feedback" aria-live="polite">
-        {saving ? "正在保存…" : notice ?? "设置会自动保存到 SQLite。"}
+        {saving ? "正在保存…" : notice ?? "学习偏好自动保存到 SQLite，外观偏好保存到本地配置。"}
       </div>
     </div>
   );

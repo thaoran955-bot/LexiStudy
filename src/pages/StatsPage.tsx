@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { loadStatistics } from "../services/statisticsService";
 import type { LearningStatistics } from "../types/statistics";
+import { calculateRoundedPercentage } from "../utils/percentage";
 
 export function StatsPage() {
   const [statistics, setStatistics] = useState<LearningStatistics | null>(null);
@@ -23,7 +24,10 @@ export function StatsPage() {
   const maximumMasteryCount = statistics
     ? Math.max(...statistics.masteryDistribution.map((entry) => entry.count), 1)
     : 1;
-  const progressWidth = statistics ? Math.min(Math.max(statistics.todayProgress, 0), 100) : 0;
+  const percentage = statistics
+    ? calculateRoundedPercentage(statistics.todayCompleted, statistics.todayTarget)
+    : 0;
+  const progressWidth = percentage;
 
   if (error) {
     return <section className="empty-panel stats-state"><span className="empty-icon">!</span><h2>{error}</h2></section>;
@@ -58,13 +62,13 @@ export function StatsPage() {
         <div className="stats-progress-track"><span style={{ width: `${progressWidth}%` }} /></div>
         <div className="stats-target-meta">
           <span>今日已学习 {statistics.todayAnswered} 次</span>
-          <span>{statistics.todayProgress}% 完成</span>
+          <span>{percentage}% 完成</span>
         </div>
       </section>
 
       <div className="stats-inline-metrics">
-        <div className="stats-inline-card"><span>总学习次数</span><strong>{statistics.totalStudyCount}</strong></div>
-        <div className="stats-inline-card"><span>总正确率</span><strong>{statistics.correctRate}%</strong></div>
+        <div className="stats-inline-card total-study-count"><span>总学习次数</span><strong>{statistics.totalStudyCount}</strong></div>
+        <div className="stats-inline-card correct-rate"><span>总正确率</span><strong>{statistics.correctRate}%</strong></div>
       </div>
 
       <div className="stats-columns">

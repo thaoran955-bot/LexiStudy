@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ProgressCard } from "../components/ProgressCard";
+import { loadStatistics } from "../services/statisticsService";
 import type { Dictionary } from "../types/dictionary";
 import type { LearningProgress } from "../types/learning";
 import type { DailyTarget } from "../types/study";
@@ -15,8 +17,21 @@ interface HomePageProps {
 }
 
 export function HomePage({ progress, dailyTarget, sessionIndex, sessionLength, currentDictionary, onTargetChange, onStartSession }: HomePageProps) {
+  const [todayCompleted, setTodayCompleted] = useState(0);
   const hasProgress = sessionIndex > 0 && sessionIndex < sessionLength;
   const isComplete = sessionIndex >= sessionLength;
+
+  useEffect(() => {
+    let active = true;
+    loadStatistics()
+      .then((statistics) => {
+        if (active) setTodayCompleted(statistics.todayCompleted);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [dailyTarget, sessionIndex]);
 
   return (
     <div className="page-stack home-page">
@@ -40,7 +55,7 @@ export function HomePage({ progress, dailyTarget, sessionIndex, sessionLength, c
       </section>
       <div className="home-focus-grid">
         <div className="home-progress">
-          <ProgressCard dailyTarget={dailyTarget} sessionIndex={sessionIndex} totalWords={progress.totalWords} />
+          <ProgressCard dailyTarget={dailyTarget} todayCompleted={todayCompleted} totalWords={progress.totalWords} />
         </div>
         <section className="target-panel">
           <div>
@@ -62,7 +77,7 @@ export function HomePage({ progress, dailyTarget, sessionIndex, sessionLength, c
       </div>
       <div className="metric-grid home-metrics">
         <div className="metric-card"><span>词库总数</span><strong>{progress.totalWords}</strong><small>固定本地词库</small></div>
-        <div className="metric-card"><span>今日已学</span><strong>{sessionIndex}</strong><small>本地 SQLite 记录</small></div>
+        <div className="metric-card"><span>今日已学</span><strong>{todayCompleted}</strong><small>本地 SQLite 记录</small></div>
         <div className="metric-card"><span>认识</span><strong>{progress.recognizedWords}</strong><small>已保存答题记录</small></div>
       </div>
       <section className="info-panel home-guidance">

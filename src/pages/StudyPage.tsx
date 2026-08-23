@@ -14,25 +14,68 @@ interface StudyPageProps {
   onAnswer: (record: LearningRecord) => void;
 }
 
+type StudyFeedbackKind = "known" | "unknown" | null;
+
 export function StudyPage({ vocabulary, startIndex, mode, onModeChange, onIndexChange, onAnswer }: StudyPageProps) {
   const navigate = useNavigate();
+  const previewParams = new URLSearchParams(window.location.search);
+  const previewFontScale = import.meta.env.DEV ? previewParams.get("fontScale") : null;
   const [index, setIndex] = useState(startIndex);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [feedbackKind, setFeedbackKind] = useState<StudyFeedbackKind>(null);
+  const feedbackTimerRef = useRef<number | null>(null);
   const entry = vocabulary[index];
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const isPreviewFontScale = previewFontScale === "125" || previewFontScale === "150" || previewFontScale === "175";
+    if (!isPreviewFontScale) return;
+
+    const root = document.documentElement;
+    const previousFontScale = root.getAttribute("data-font-scale");
+
+    root.setAttribute("data-font-scale", previewFontScale);
+
+    return () => {
+      if (previousFontScale) root.setAttribute("data-font-scale", previousFontScale);
+      else root.removeAttribute("data-font-scale");
+    };
+  }, [previewFontScale]);
+
+  const showFeedback = useCallback((recognized: boolean, onComplete: () => void) => {
+    setFeedbackKind(recognized ? "known" : "unknown");
+    if (feedbackTimerRef.current !== null) window.clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = window.setTimeout(() => {
+      setFeedbackKind(null);
+      feedbackTimerRef.current = null;
+      onComplete();
+    }, 900);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current !== null) window.clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (feedbackTimerRef.current !== null) return;
     setIndex(startIndex);
     setShowAnswer(false);
+    setFeedbackKind(null);
   }, [startIndex]);
 
   const answer = useCallback((recognized: boolean) => {
-    if (!entry) return;
-    onAnswer({ wordId: entry.id, recognized, answeredAt: new Date().toISOString() });
-    setShowAnswer(false);
+    if (!entry || feedbackTimerRef.current !== null) return;
     const nextIndex = Math.min(index + 1, vocabulary.length);
-    setIndex(nextIndex);
+    showFeedback(recognized, () => {
+      setShowAnswer(false);
+      setIndex(nextIndex);
+    });
+    onAnswer({ wordId: entry.id, recognized, answeredAt: new Date().toISOString() });
     onIndexChange(nextIndex);
-  }, [entry, index, onAnswer, onIndexChange, vocabulary.length]);
+  }, [entry, index, onAnswer, onIndexChange, showFeedback, vocabulary.length]);
 
   const showAnswerRef = useRef(showAnswer);
   const answerRef = useRef(answer);
@@ -72,7 +115,7 @@ export function StudyPage({ vocabulary, startIndex, mode, onModeChange, onIndexC
   }
 
   return (
-    <div className="page-stack study-page">
+    <div className="page-stack study-page" data-answer-state={showAnswer ? "revealed" : "hidden"}>
       <header className="page-header compact-header">
         <div><span className="eyebrow">学习中</span><h1>新词练习</h1></div>
         <div className="study-tools">
@@ -81,17 +124,28 @@ export function StudyPage({ vocabulary, startIndex, mode, onModeChange, onIndexC
           <span className="study-counter">{index + 1} / {vocabulary.length}</span>
         </div>
       </header>
-      <section className="word-card">
-        <span className="word-index">WORD {String(entry.id).padStart(4, "0")}</span>
-        <h2 className={mode === "zh-to-en" ? "front-meaning" : ""}>{getFrontText(entry, mode)}</h2>
-        {showAnswer ? <p className="meaning">{getAnswerText(entry, mode)}</p> : <p className="hidden-meaning">准备好后查看答案</p>}
-        <button className="answer-button" onClick={() => setShowAnswer(true)} disabled={showAnswer}>显示答案 <span>Space</span></button>
-      </section>
-      <div className="answer-actions">
-        <button className="secondary-button unknown" onClick={() => answer(false)} disabled={!showAnswer}>不认识 <span>←</span></button>
-        <button className="secondary-button known" onClick={() => answer(true)} disabled={!showAnswer}>认识 <span>→</span></button>
+      <main className="word-stage" aria-label="单词学习区域">
+        <section className="word-card" data-answer-state={showAnswer ? "revealed" : "hidden"}>
+          <div className="word-meta">
+            <span className="word-index">WORD {String(entry.id).padStart(4, "0")}</span>
+          </div>
+          <div className="word-prompt">
+            <h2 className={mode === "zh-to-en" ? "front-meaning" : ""}>{getFrontText(entry, mode)}</h2>
+          </div>
+          <div className="answer-reserve" aria-live="polite">
+            {showAnswer ? <p className="meaning">{getAnswerText(entry, mode)}</p> : <p className="hidden-meaning">准备好后查看答案</p>}
+          </div>
+          <button className="answer-button" onClick={() => setShowAnswer(true)} disabled={showAnswer}>显示答案 <span>Space</span></button>
+        </section>
+      </main>
+      <div className="answer-actions" aria-label="判断答案">
+        <button className="secondary-button unknown" onClick={() => answer(false)} disabled={!showAnswer || feedbackKind !== null}>不认识 <span>←</span></button>
+        <button className="secondary-button known" onClick={() => answer(true)} disabled={!showAnswer || feedbackKind !== null}>认识 <span>→</span></button>
       </div>
-      <p className="phase-note">答题记录自动保存到本地 SQLite，固定词库文件保持只读。</p>
+      <div className="study-feedback" data-feedback={feedbackKind ?? "idle"}>
+        <p className="feedback-message" role="status" aria-live="polite" aria-atomic="true">{feedbackKind ? "已记录" : ""}</p>
+        <p className="phase-note" role="status">答题记录自动保存到本地 SQLite，固定词库文件保持只读。</p>
+      </div>
     </div>
   );
 }

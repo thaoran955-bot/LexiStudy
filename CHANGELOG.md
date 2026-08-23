@@ -1,6 +1,6 @@
 # 更新日志
 
-## v0.2.0-alpha
+## v0.2.0 — Final Release Freeze (2026-08-24)
 
 ### Added
 
@@ -9,6 +9,8 @@
 - Dark/light theme foundation。
 - Typography scaling。
 - Animation feedback。
+- Appearance > Theme controls with persisted Light/Dark selection。
+- Shared integer percentage formatting for Home and Statistics daily progress。
 
 ### Improved
 
@@ -21,12 +23,25 @@
 
 - Homepage layout overflow issues。
 - UI consistency issues。
+- Theme System V2 color-role separation: Dark = Black + Green Accent; Light = White + Blue Accent。
+- Light Mode Home learning-progress accent mapping。
+- Light Mode Sidebar current-progress accent mapping。
+- Statistics dashboard Accent mapping for Today Target, Total Study Count, Total Accuracy, and Mastery Distribution。
+- Home and Statistics daily-learning data unified through `todayCompleted`。
+- Home and Statistics percentage precision unified with integer rounding。
 
-### Not included
+### Verification
 
-- Learning page redesign。
-- New features。
-- Stats Dashboard。
+- Automated tests: 13 test files, 46 tests passed。
+- Renderer Build and Electron TypeScript Build: PASS。
+- Final installed-app manual acceptance: PASS。
+- P0: 0；P1: 0。
+
+### Release status
+
+- FINAL ACCEPTANCE PASSED。
+- FINAL RELEASE FREEZE。
+- Git commit、tag、push remain pending separate AAA authorization。
 
 ## LexiStudy v0.1.1 Stable
 
